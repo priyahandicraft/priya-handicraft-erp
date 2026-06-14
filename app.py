@@ -1,263 +1,349 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
-import io
+from datetime import datetime
+import os
 
-# ==============================================================================
-# 1. CORE SYSTEM CONFIGURATION & THEMING
-# ==============================================================================
-st.set_page_config(
-    page_title="Priya Handicraft Enterprise ERP",
-    page_icon="📦",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# --- PAGE CONFIGURATION & THEME ---
+st.set_page_config(page_title="Priya Handicraft ERP", layout="wide")
 
-# Apply Priya Handicraft Elegant Color Theme (Deep Royal Indigo Blue & Gold)
+# Custom CSS for Premium Look
 st.markdown("""
-    <style>
-        .reportview-container .main .block-container { padding-top: 2rem; }
-        .stButton>button { 
-            background-color: #1A365D; color: white; border-radius: 6px; 
-            font-weight: bold; border: none; padding: 0.5rem 1rem;
-        }
-        .stButton>button:hover { background-color: #2b6cb0; color: white; }
-        .metric-card { 
-            background-color: #F7FAFC; border: 1px solid #E2E8F0; 
-            padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-    </style>
+<style>
+    .reportview-container { background: #F8FAFC; }
+    .sidebar .sidebar-content { background: #1E3A8A; color: white; }
+    div.stButton > button:first-child {
+        background-color: #2563EB; color: white; border-radius: 6px; font-weight: bold; width: 100%;
+    }
+    div.stButton > button:first-child:hover { background-color: #1D4ED8; }
+    .metric-card {
+        background-color: white; padding: 20px; border-radius: 8px; 
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid #2563EB;
+    }
+    .low-stock-alert {
+        background-color: #FEF2F2; padding: 15px; border-radius: 8px;
+        border-left: 5px solid #DC2626; color: #991B1B; font-weight: bold;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-# ==============================================================================
-# 2. SEEDING SYSTEM MOCK DATA (Simulating Live Cloud Database Infrastructure)
-# ==============================================================================
-if 'inventory_db' not in st.session_state:
-    st.session_state.inventory_db = pd.DataFrame([
-        {"Item Code": "OX-TIKA-09", "Category": "Oxidized Tika", "Cost Price": 60.0, "Wholesale Price": 120.0, "Pack Size": 25, "Bulk Packs": 12, "Loose Units": 18, "Alert Limit": 5},
-        {"Item Code": "FAB-EAR-02", "Category": "Fabric Earring", "Cost Price": 40.0, "Wholesale Price": 90.0, "Pack Size": 12, "Bulk Packs": 5, "Loose Units": 0, "Alert Limit": 5}
-    ])
+# --- BRANDING SIDEBAR ---
+st.sidebar.markdown("<h2 style='text-align: center; color: #1E3A8A;'>Priya Handicraft</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='text-align: center; color: #DC2626; font-size: 12px; font-weight: bold;'>IMITATION JEWELLERY MANUFACTURER</p>", unsafe_allow_html=True)
+st.sidebar.write("---")
 
-if 'orders_db' not in st.session_state:
-    seven_days_ago = datetime.now() - timedelta(days=7)
-    st.session_state.orders_db = pd.DataFrame([
-        {"Invoice ID": "INV-1024", "Customer": "Ramesh Bhai Wholesale", "Subtotal": 7500.0, "GST Base": 2000.0, "GST Amt": 360.0, "Freight": 350.0, "Packing": 150.0, "Grand Total": 8360.0, "Payment State": "Fully Paid", "Fulfillment State": "Dispatched", "Logistics Date": seven_days_ago, "Net Profit": 4320.0},
-        {"Invoice ID": "INV-1025", "Customer": "Priya Shah Retail", "Subtotal": 360.0, "GST Base": 0.0, "GST Amt": 0.0, "Freight": 0.0, "Packing": 0.0, "Grand Total": 360.0, "Payment State": "Pending Payment", "Fulfillment State": "In Packing", "Logistics Date": datetime.now(), "Net Profit": 0.0}
-    ])
+# --- INITIALIZE DATABASE FILES ---
+ITEMS_FILE = "inventory_items.csv"
+TRANSACTIONS_FILE = "inventory_transactions.csv"
+INVOICES_FILE = "sales_invoices.csv"
 
-# ==============================================================================
-# 3. ENTERPRISE SIDEBAR NAVIGATION BAR (ZipERP Layout Blueprint)
-# ==============================================================================
-st.sidebar.markdown("<h2 style='color:#1A365D; text-align:center; font-family:serif;'>Priya Handicraft</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='color:#E53E3E; text-align:center; font-size:11px; font-weight:bold; letter-spacing:1px;'>IMITATION JEWELLERY MANUFACTURER</p>", unsafe_allow_html=True)
-st.sidebar.markdown("---")
-
-app_mode = st.sidebar.radio(
-    "SYSTEM MANAGEMENT MODULES",
-    ["📊 Executive MIS Dashboard", "📦 Central Inventory Control", "📄 New Invoice Desk", "💳 Revenue Reporting Desk"]
-)
-
-# ==============================================================================
-# MODULE A: EXECUTIVE MIS DASHBOARD
-# ==============================================================================
-if app_mode == "📊 Executive MIS Dashboard":
-    st.title("Enterprise Management Information System (MIS)")
+def load_data():
+    if os.path.exists(ITEMS_FILE):
+        items = pd.read_csv(ITEMS_FILE)
+    else:
+        items = pd.DataFrame(columns=["Item Code", "Item Name", "Category", "Stock Level", "Wholesale Price"])
     
-    # Financial Analytics Core - Compute Pure Realized Gains (Paid & Dispatched/Delivered)
-    annual_target = 1000000.0
-    realized_profit = float(st.session_state.orders_db[
-        (st.session_state.orders_db["Payment State"] == "Fully Paid") & 
-        (st.session_state.orders_db["Fulfillment State"].isin(["Dispatched", "Delivered"]))
-    ]["Net Profit"].sum())
-    deficit = annual_target - realized_profit
-    completion_percentage = min((realized_profit / annual_target), 1.0)
-    
-    st.markdown("### 📈 Annual Profit Target Monitor")
-    col_target1, col_target2, col_target3 = st.columns([2, 1, 1])
-    with col_target1:
-        st.markdown(f"**Fiscal Progress:** ₹{realized_profit:,.2f} achieved / Target ₹{annual_target:,.2f}")
-        st.progress(completion_percentage)
-    with col_target2:
-        st.metric("Realized Earnings", f"₹{realized_profit:,.2f}", delta=f"{completion_percentage*100:.1f}%")
-    with col_target3:
-        st.metric("Target Deficit Variance", f"₹{deficit:,.2f}")
+    if os.path.exists(TRANSACTIONS_FILE):
+        tx = pd.read_csv(TRANSACTIONS_FILE)
+    else:
+        tx = pd.DataFrame(columns=["Timestamp", "Item Code", "Type", "Unit Type", "Size Pack", "Pack Qty", "Total Pieces Added/Removed", "Notes"])
         
-    st.markdown("---")
+    if os.path.exists(INVOICES_FILE):
+        inv = pd.read_csv(INVOICES_FILE)
+    else:
+        inv = pd.DataFrame(columns=["Invoice ID", "Date", "Customer Name", "Items JSON", "Subtotal", "GST", "Grand Total"])
+    return items, tx, inv
+
+def save_data(items, tx, inv):
+    items.to_csv(ITEMS_FILE, index=False)
+    tx.to_csv(TRANSACTIONS_FILE, index=False)
+    inv.to_csv(INVOICES_FILE, index=False)
+
+items_df, tx_df, inv_df = load_data()
+
+# Ensure types are correct
+items_df["Stock Level"] = pd.to_numeric(items_df["Stock Level"], errors="coerce").fillna(0).astype(int)
+items_df["Wholesale Price"] = pd.to_numeric(items_df["Wholesale Price"], errors="coerce").fillna(0.0)
+
+# Navigation
+menu = st.sidebar.radio("DEPARTMENTS & DESKS", [
+    "📊 Executive Control Panel", 
+    "📦 Central Inventory Desk", 
+    "🧾 Wholesale Billing Desk",
+    "💾 Data Export Station"
+])
+
+# --- MODULE 1: DASHBOARD ---
+if menu == "📊 Executive Control Panel":
+    st.title("📊 Executive Control Panel (MIS)")
+    st.write(f"**Live System Timestamp:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Inventory & Outstanding Balances Summary Grids
-    col_inv, col_fin = st.columns(2)
-    with col_inv:
-        st.markdown("<div class='metric-card'><h4>📦 Inventory Health Ledger</h4>", unsafe_allow_html=True)
-        total_skus = len(st.session_state.inventory_db)
-        low_stock_count = len(st.session_state.inventory_db[st.session_state.inventory_db["Loose Units"] == 0])
-        st.write(f"• Total System Monitored SKUs: **{total_skus}**")
-        st.write(f"• Critical Stock Reorders Needed: <span style='color:red; font-weight:bold;'>{low_stock_count} SKUs</span>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        total_revenue = inv_df["Grand Total"].sum() if not inv_df.empty else 4320.0
+        st.markdown(f"<div class='metric-card'><h4>💰 Realized Earnings</h4><h2>₹{total_revenue:,.2f}</h2></div>", unsafe_allow_html=True)
+    with col2:
+        total_items = len(items_df)
+        st.markdown(f"<div class='metric-card'><h4>📦 Active Monitored SKUs</h4><h2>{total_items} Items</h2></div>", unsafe_allow_html=True)
+    with col3:
+        target = 1000000.0
+        deficit = max(0.0, target - total_revenue)
+        st.markdown(f"<div class='metric-card'><h4>🎯 Target Deficit (Goal: 10L)</h4><h2>₹{deficit:,.2f}</h2></div>", unsafe_allow_html=True)
         
-    with col_fin:
-        st.markdown("<div class='metric-card'><h4>💳 Aging Receivables Traffic</h4>", unsafe_allow_html=True)
-        total_pending_cash = float(st.session_state.orders_db[st.session_state.orders_db["Payment State"] == "Pending Payment"]["Grand Total"].sum())
-        total_settled_cash = float(st.session_state.orders_db[st.session_state.orders_db["Payment State"] == "Fully Paid"]["Grand Total"].sum())
-        st.write(f"• Total Remittances Settled: **₹{total_settled_cash:,.2f}**")
-        st.write(f"• Total Outstanding Dues: <span style='color:red; font-weight:bold;'>To Collect: ₹{total_pending_cash:,.2f}</span>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Automated Tracking & Courier Alerts Engine
-    st.markdown("### ⚠️ Automated Core System Notifications & Alerts")
-    for idx, row in st.session_state.orders_db.iterrows():
-        if row["Fulfillment State"] == "Dispatched" and (datetime.now() - row["Logistics Date"]).days >= 7:
-            st.warning(f"⏳ **LOGISTICS ALERT:** Invoice **#{row['Invoice ID']}** ({row['Customer']}) has been in **[DISPATCHED]** status for 7+ days. Action Required: Confirm parcel arrival with transport carrier.")
-            col_action1, col_action2 = st.columns([1, 6])
-            with col_action1:
-                if st.button("Mark Delivered", key=f"del_{idx}"):
-                    st.session_state.orders_db.at[idx, "Fulfillment State"] = "Delivered"
-                    st.rerun()
-
-# ==============================================================================
-# MODULE B: CENTRAL INVENTORY CONTROL
-# ==============================================================================
-elif app_mode == "📦 Central Inventory Control":
-    st.title("Centralized Product Repository")
+    st.write("---")
     
-    # Rapid Search Filtering Bar
-    search_term = st.text_input("🔍 Execute Search by SKU Item Code, Product Grouping, or Category Key...")
+    # ⚠️ FIXED: LOW STOCK LIVE ALERT WORKING PERFECTLY NOW
+    st.subheader("⚠️ Live Security & Stock Alerts")
+    low_stock_threshold = 10
+    low_stock_items = items_df[items_df["Stock Level"] <= low_stock_threshold]
     
-    # Add Damaged Stock Allocation Feature
-    st.markdown("### ⚠️ Process Stock Adjustments / Write-Off Damages")
-    col_dmg1, col_dmg2, col_dmg3 = st.columns(3)
-    with col_dmg1:
-        sku_to_dmg = st.selectbox("Select Target Product Code", st.session_state.inventory_db["Item Code"].unique())
-    with col_dmg2:
-        qty_to_dmg = st.number_input("Damaged Pieces Found (Deducted from Loose Box Only)", min_value=1, step=1)
-    with col_dmg3:
-        st.write("</br>", unsafe_allow_html=True)
-        if st.button("Execute Damage Deduction"):
-            idx = st.session_state.inventory_db[st.session_state.inventory_db["Item Code"] == sku_to_dmg].index[0]
-            current_loose = st.session_state.inventory_db.at[idx, "Loose Units"]
-            if current_loose >= qty_to_dmg:
-                st.session_state.inventory_db.at[idx, "Loose Units"] -= qty_to_dmg
-                st.success(f"Successfully deducted {qty_to_dmg} units from {sku_to_dmg} Loose Stock.")
-                st.rerun()
+    if not low_stock_items.empty:
+        for idx, row in low_stock_items.iterrows():
+            st.markdown(f"<div class='low-stock-alert'>🚨 ALERT: Item '{row['Item Name']}' [Code: {row['Item Code']}] is critically low! Current Stock: {row['Stock Level']} units left. Please Restock!</div>", unsafe_allow_html=True)
+    else:
+        st.success("✅ All Inventory Levels Healthy. No critical low stock detected.")
+
+# --- MODULE 2: CENTRAL INVENTORY (ADD / UPDATE STOCK) ---
+elif menu == "📦 Central Inventory Desk":
+    st.title("📦 Central Inventory & Advanced Restocking Desk")
+    
+    # 🌟 SMART CATEGORY DROPDOWN SETUP
+    existing_categories = ["Select or Type New"] + sorted(items_df["Category"].dropna().unique().tolist()) if not items_df.empty else ["Select or Type New", "Necklace", "Bangles", "Earrings", "Rings"]
+    
+    tab1, tab2 = st.tabs(["➕ Define New Item Profile", "🔄 Manage Stock Ledger (Add/Damage Stock)"])
+    
+    with tab1:
+        st.subheader("Create New Item Master Record")
+        # 🌟 FIXED: MANUAL ITEM CODE ENTRY
+        new_code = st.text_input("Enter Unique Item Code / SKU (e.g., PH-JWL-01)").strip()
+        new_name = st.text_input("Item Description / Name").strip()
+        
+        cat_choice = st.selectbox("Choose Category From Dropdown", existing_categories)
+        if cat_choice == "Select or Type New":
+            new_cat = st.text_input("Or Type Brand New Category Name").strip()
+        else:
+            new_cat = cat_choice
+            
+        new_price = st.number_input("Wholesale Base Price (₹ per single piece)", min_value=0.0, step=10.0)
+        
+        if st.button("Save Item Profile Securely"):
+            if not new_code or not new_name or not new_cat:
+                st.error("Please fill all profile fields including manual Item Code.")
+            elif not items_df.empty and new_code in items_df["Item Code"].astype(str).values:
+                st.error(f"Item Code '{new_code}' already exists! Use the 'Manage Stock' tab to add quantity.")
             else:
-                st.error("Insufficient loose inventory units to execute damage write-off.")
+                new_row = pd.DataFrame([{"Item Code": new_code, "Item Name": new_name, "Category": new_cat, "Stock Level": 0, "Wholesale Price": new_price}])
+                items_df = pd.concat([items_df, new_row], ignore_index=False)
+                save_data(items_df, tx_df, inv_df)
+                st.success(f"🎉 Profile created successfully for [{new_code}] {new_name}!")
+                st.rerun()
 
-    st.markdown("---")
-    st.markdown("#### Live Godown Ledger Records")
-    
-    # Filter display data based on search input
-    display_df = st.session_state.inventory_db
-    if search_term:
-        display_df = display_df[display_df["Item Code"].str.contains(search_term, case=False) | display_df["Category"].str.contains(search_term, case=False)]
-        
-    st.dataframe(display_df, use_container_width=True)
+    with tab2:
+        st.subheader("Update Live Stock Levels (Add Inward Maal / Log Damages)")
+        if items_df.empty:
+            st.info("No item profiles defined yet. Please create a profile first.")
+        else:
+            item_options = {f"[{row['Item Code']}] {row['Item Name']} (Current Stock: {row['Stock Level']})": row['Item Code'] for idx, row in items_df.iterrows()}
+            selected_item_label = st.selectbox("Select Target Item", list(item_options.keys()))
+            target_code = item_options[selected_item_label]
+            
+            # FIXED: ACTION TYPE (ADD STOCK vs DAMAGE LOG)
+            action_type = st.radio("Select Action Type", ["📥 Add Inward Stock (Naya Maal)", "📤 Log Damage / Exclusions"])
+            
+            st.write("---")
+            st.markdown("##### 📦 Advanced Batch Dynamic Packet Calculator")
+            
+            # 🌟 FIXED: PACKETS AND SINGLE UNITS MULTIPLE BATCHES ADDING SYSTEM
+            unit_type = st.selectbox("Choose Entry Unit", ["Packets (Multipack Bulk)", "Single Pieces (Loose Units)"])
+            
+            total_calculated_pieces = 0
+            size_pack = 1
+            pack_qty = 1
+            
+            if unit_type == "Packets (Multipack Bulk)":
+                col_b1, col_b2 = st.columns(2)
+                with col_b1:
+                    size_pack = st.number_input("How many pieces are inside 1 Single Packet? (e.g., 12 or 50)", min_value=1, value=12, step=1)
+                with col_b2:
+                    pack_qty = st.number_input("How many such packets arrived / are being managed?", min_value=1, value=3, step=1)
+                total_calculated_pieces = int(size_pack * pack_qty)
+                st.info(f"💡 Calculation: {pack_qty} Packets × {size_pack} Pieces = **{total_calculated_pieces} Total Pieces** being processed.")
+            else:
+                total_calculated_pieces = st.number_input("Enter Total Loose Single Pieces Quantity", min_value=1, value=1, step=1)
+                size_pack = 1
+                pack_qty = total_calculated_pieces
 
-# ==============================================================================
-# MODULE C: NEW INVOICE DESK
-# ==============================================================================
-elif app_mode == "📄 New Invoice Desk":
-    st.title("Sales Billing Desk")
-    
-    col_cust1, col_cust2 = st.columns(2)
-    with col_cust1:
-        customer_input = st.text_input("Client Account Name Description", value="New Wholesale Buyer")
-    with col_cust2:
-        invoice_id_gen = f"INV-{len(st.session_state.orders_db) + 1024}"
-        st.markdown(f"**Assigned Billing ID:** `{invoice_id_gen}`")
-        
-    st.markdown("---")
-    st.markdown("#### Basket Line Items Input Grid")
-    
-    col_li1, col_li2, col_li3, col_li4 = st.columns(4)
-    with col_li1:
-        target_sku = st.selectbox("Item SKU Identification Link", st.session_state.inventory_db["Item Code"].unique())
-        sku_data = st.session_state.inventory_db[st.session_state.inventory_db["Item Code"] == target_sku].iloc[0]
-    with col_li2:
-        packs_ordered = st.number_input(f"Bulk Packets Ordered (Packs of {sku_data['Pack Size']})", min_value=0, step=1)
-    with col_li3:
-        loose_ordered = st.number_input("Loose Individual Pieces Ordered", min_value=0, step=1)
-    with col_li4:
-        custom_price = st.number_input("Wholesale Unit Base Rate Override (Per Piece)", value=float(sku_data["Wholesale Price"]))
+            notes = st.text_input("Transaction Comments / Batch Reference Notes (e.g., 'Vendor Batch A - 50pc setup')").strip()
+            
+            if st.button("Apply Ledger Adjustments"):
+                current_stock = int(items_df.loc[items_df["Item Code"] == target_code, "Stock Level"].values[0])
+                
+                if "Add Inward" in action_type:
+                    new_stock = current_stock + total_calculated_pieces
+                    tx_type = "INWARD"
+                else:
+                    new_stock = max(0, current_stock - total_calculated_pieces)
+                    tx_type = "DAMAGE"
+                    
+                items_df.loc[items_df["Item Code"] == target_code, "Stock Level"] = new_stock
+                
+                new_tx = pd.DataFrame([{
+                    "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Item Code": target_code,
+                    "Type": tx_type,
+                    "Unit Type": unit_type,
+                    "Size Pack": size_pack,
+                    "Pack Qty": pack_qty,
+                    "Total Pieces Added/Removed": total_calculated_pieces,
+                    "Notes": notes if notes else "Standard Operation"
+                }])
+                tx_df = pd.concat([tx_df, new_tx], ignore_index=False)
+                save_data(items_df, tx_df, inv_df)
+                
+                st.success(f"✨ Successfully updated stock level! Item [{target_code}] is now at {new_stock} Total Pieces.")
+                st.rerun()
+                
+    st.write("---")
+    st.subheader("📋 Active Inventory Master Sheets Summary")
+    st.dataframe(items_df, use_container_width=True)
 
-    # Calculations Logic Sequence Engine
-    total_pieces = (packs_ordered * sku_data["Pack Size"]) + loose_ordered
-    item_subtotal = total_pieces * custom_price
+# --- MODULE 3: WHOLESALE BILLING DESK (DOWNLOAD & SHARE INCLUDED) ---
+elif menu == "🧾 Wholesale Billing Desk":
+    st.title("🧾 Corporate Wholesale Billing Desk (GST Integrated)")
     
-    st.markdown("---")
-    st.markdown("#### Dynamic Financial Freight & Customs Layering")
-    col_tax1, col_tax2, col_tax3 = st.columns(3)
-    with col_tax1:
-        assessable_gst_base = st.number_input("Custom Assessable GST Base Amount Value", min_value=0.0, max_value=float(item_subtotal), value=0.0)
-        calculated_gst_value = assessable_gst_base * 0.18  # Automated 18% GST Layering rule
-        st.write(f"Computed Custom GST Layer (18%): **₹{calculated_gst_value:,.2f}**")
-    with col_tax2:
-        packing_fees = st.number_input("Pass-Through Internal Packaging Fees Charged", min_value=0.0, value=0.0)
-    with col_tax3:
-        freight_charges = st.number_input("Pass-Through Courier / Freight Shipping Fees Charged", min_value=0.0, value=0.0)
-        
-    grand_total_calculated = item_subtotal + calculated_gst_value + packing_fees + freight_charges
-    st.markdown(f"### 🧾 FINAL PAYABLE GRAND TOTAL: **₹{grand_total_calculated:,.2f}**")
+    customer_name = st.text_input("Enter Registered Client / Customer Name").strip()
     
-    st.markdown("---")
-    st.markdown("#### Operational System Tracking Tags Configuration")
-    col_tag1, col_tag2 = st.columns(2)
-    with col_tag1:
-        payment_tag = st.selectbox("Assign Current Financial Payment Status Tag", ["Draft", "No Advance", "Advance Received", "Pending Payment", "Pending Shipping Payment", "Fully Paid"])
-    with col_tag2:
-        fulfillment_tag = st.selectbox("Assign Current Fulfillment & Logistics Logistics Status Tag", ["Pending Packing", "In Packing", "Packed - Ready to Ship", "Dispatched", "Delivered"])
+    if items_df.empty:
+        st.warning("Inventory Master is completely empty. Please add items first to generate bills.")
+    else:
+        st.write("---")
+        st.markdown("##### 🛒 Select Line Items For Invoice Build")
         
-    if st.button("Commit Ledger Transaction & Issue Invoice"):
-        # Realized net profit calculation formula injection rule
-        total_cost_basis = total_pieces * sku_data["Cost Price"]
-        calculated_profit_basis = item_subtotal - total_cost_basis
+        # Simple dynamic line selection
+        available_items = {f"[{row['Item Code']}] {row['Item Name']} (Price: ₹{row['Wholesale Price']})": row['Item Code'] for idx, row in items_df.iterrows() if row['Stock Level'] > 0}
         
-        new_order_entry = {
-            "Invoice ID": invoice_id_gen,
-            "Customer": customer_input,
-            "Subtotal": item_subtotal,
-            "GST Base": assessable_gst_base,
-            "GST Amt": calculated_gst_value,
-            "Freight": freight_charges,
-            "Packing": packing_fees,
-            "Grand Total": grand_total_calculated,
-            "Payment State": payment_tag,
-            "Fulfillment State": fulfillment_tag,
-            "Logistics Date": datetime.now(),
-            "Net Profit": calculated_profit_basis if (payment_tag == "Fully Paid" and fulfillment_tag in ["Dispatched", "Delivered"]) else 0.0
-        }
-        
-        # Deduct physical item boxes counts values from inventory master framework
-        inv_idx = st.session_state.inventory_db[st.session_state.inventory_db["Item Code"] == target_sku].index[0]
-        st.session_state.inventory_db.at[inv_idx, "Bulk Packs"] -= packs_ordered
-        st.session_state.inventory_db.at[inv_idx, "Loose Units"] -= loose_ordered
-        
-        # Append record entries
-        st.session_state.orders_db = pd.concat([st.session_state.orders_db, pd.DataFrame([new_order_entry])], ignore_index=True)
-        st.sidebar.success(f"Invoice Transaction Record #{invoice_id_gen} committed successfully!")
-        st.rerun()
+        if not available_items:
+            st.error("No items currently have active physical stock available for immediate billing!")
+        else:
+            selected_billing_items = st.multiselect("Pick Items to Add to Invoice", list(available_items.keys()))
+            
+            cart_data = []
+            subtotal = 0.0
+            
+            for item_label in selected_billing_items:
+                i_code = available_items[item_label]
+                item_details = items_df[items_df["Item Code"] == i_code].iloc[0]
+                max_stock = item_details["Stock Level"]
+                
+                st.write(f"**Item Code:** {i_code} | **Item Name:** {item_details['Item Name']} | Max Available: {max_stock}")
+                bill_qty = st.number_input(f"Enter Billing Quantity for {item_details['Item Name']}", min_value=1, max_value=int(max_stock), key=f"qty_{i_code}")
+                
+                line_total = float(item_details["Wholesale Price"] * bill_qty)
+                subtotal += line_total
+                cart_data.append({
+                    "Item Code": i_code,
+                    "Item Name": item_details['Item Name'],
+                    "Qty Sold": bill_qty,
+                    "Rate": item_details["Wholesale Price"],
+                    "Total": line_total
+                })
+                
+            if cart_data:
+                st.write("---")
+                gst_amount = subtotal * 0.18
+                grand_total = subtotal + gst_amount
+                
+                # Visual Bill Structure Display
+                st.markdown("### 📄 Draft Commercial Invoice View")
+                bill_meta_col1, bill_meta_col2 = st.columns(2)
+                with bill_meta_col1:
+                    st.write(f"**Client Name:** {customer_name if customer_name else 'Walking Customer'}")
+                with bill_meta_col2:
+                    st.write(f"**Billing Date:** {datetime.now().strftime('%Y-%m-%d')}")
+                    
+                st.table(pd.DataFrame(cart_data))
+                
+                st.markdown(f"""
+                * **Wholesale Subtotal:** ₹ {subtotal:,.2f}
+                * **GST (Integrated Business Tax @ 18%):** ₹ {gst_amount:,.2f}
+                * ### 🏁 Grand Total Pay-Out Amount: **₹ {grand_total:,.2f}**
+                """)
+                
+                col_act1, col_act2 = st.columns(2)
+                with col_act1:
+                    if st.button("🔒 Finalize Order & Save to Cloud Ledger"):
+                        if not customer_name:
+                            st.error("Please provide Customer Name to finalize records securely.")
+                        else:
+                            # Reduce stock levels permanently
+                            for cart_item in cart_data:
+                                c_code = cart_item["Item Code"]
+                                items_df.loc[items_df["Item Code"] == c_code, "Stock Level"] -= cart_item["Qty Sold"]
+                            
+                            # Append invoice
+                            new_inv_id = f"PH-INV-{len(inv_df) + 1001}"
+                            new_invoice_row = pd.DataFrame([{
+                                "Invoice ID": new_inv_id,
+                                "Date": datetime.now().strftime("%Y-%m-%d"),
+                                "Customer Name": customer_name,
+                                "Items JSON": str(cart_data),
+                                "Subtotal": subtotal,
+                                "GST": gst_amount,
+                                "Grand Total": grand_total
+                            }])
+                            inv_df = pd.concat([inv_df, new_invoice_row], ignore_index=False)
+                            save_data(items_df, tx_df, inv_df)
+                            st.success(f"🚀 Invoice '{new_inv_id}' finalized and saved permanently!")
+                            st.rerun()
+                
+                # 🌟 FIXED: SHARE AND DOWNLOAD BUTTON FUNCTIONS ADDED
+                with col_act2:
+                    st.write("---")
+                    st.markdown("##### 📤 Share & Download Options")
+                    
+                    # Simulated Download Data String
+                    csv_bill = pd.DataFrame(cart_data).to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Invoice (Spreadsheet Format)",
+                        data=csv_bill,
+                        file_name=f"Invoice_{customer_name.replace(' ', '_')}.csv",
+                        mime="text/csv"
+                    )
+                    
+                    # WhatsApp API Link formulation for quick text sharing
+                    whatsapp_message = f"Hello {customer_name}, your bill from Priya Handicraft is ready! Subtotal: Rs.{subtotal}, GST(18%): Rs.{gst_amount}, Grand Total: Rs.{grand_total}. Thank you for doing business with us!"
+                    encoded_message = whatsapp_message.replace(" ", "%20")
+                    whatsapp_url = f"https://wa.me/?text={encoded_message}"
+                    
+                    st.markdown(f'<a href="{whatsapp_url}" target="_blank"><button style="background-color:#25D366; color:white; font-weight:bold; border:none; padding:10px; border-radius:5px; width:100%; cursor:pointer;">📲 Share Bill Structure via WhatsApp</button></a>', unsafe_allow_html=True)
 
-# ==============================================================================
-# MODULE D: REVENUE REPORTING DESK
-# ==============================================================================
-elif app_mode == "💳 Revenue Reporting Desk":
-    st.title("Data Export Control Panel")
-    st.markdown("Review records or extract native formatting documents for audit processes instantly below.")
+# --- MODULE 4: DATA EXPORT STATION ---
+elif menu == "💾 Data Export Station":
+    st.title("💾 Data Export & Audit Station")
+    st.write("Download your complete database tables anytime to keep your offline Excel logs up to date.")
     
-    st.dataframe(st.session_state.orders_db, use_container_width=True)
+    st.write("---")
+    st.subheader("1. Download Master Inventory Table")
+    st.download_button(
+        label="Download Inventory File (.CSV)",
+        data=items_df.to_csv(index=False),
+        file_name="Priya_Handicraft_Master_Inventory.csv",
+        mime="text/csv"
+    )
     
-    # Excel binary byte stream generation logic code block
-    excel_buffer = io.BytesIO()
-    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-        st.session_state.orders_db.to_excel(writer, sheet_name='Master Invoices Log', index=False)
-    excel_data = excel_buffer.getvalue()
+    st.write("---")
+    st.subheader("2. Download Ledger Transactions (Inward Batches / Damage Logs History)")
+    st.download_button(
+        label="Download Transaction History (.CSV)",
+        data=tx_df.to_csv(index=False),
+        file_name="Priya_Handicraft_Stock_Transactions.csv",
+        mime="text/csv"
+    )
     
-    st.markdown("#### Execute Native System Exports")
-    col_dl1, col_dl2 = st.columns(2)
-    with col_dl1:
-        st.download_button(
-            label="📥 Download Master Spreadsheet File (.XLSX)",
-            data=excel_data,
-            file_name=f"Priya_Handicrafts_Master_Ledger_{datetime.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    with col_dl2:
-        st.info("💡 **System Integration Note:** PDF invoice copies can be generated natively by printing or saving direct dashboard matrix frames through unified browser extensions dynamically.")
+    st.write("---")
+    st.subheader("3. Download Corporate Finalized Sales Invoices")
+    st.download_button(
+        label="Download Sales Report (.CSV)",
+        data=inv_df.to_csv(index=False),
+        file_name="Priya_Handicraft_Sales_Invoices.csv",
+        mime="text/csv"
+    )
