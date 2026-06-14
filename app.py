@@ -62,7 +62,7 @@ st.markdown("""
 
 # 🌐 ONLINE SECURE LOGO URL (No File Upload Needed!)
 # Tip: Aap future mein is URL link ko apni kisi bhi online logo image link se badal sakti hain
-LOGO_URL = "https://img.icons8.com/fluent/150/000000/jewelry.png"
+LOGO_URL = "https://i.ibb.co/S4vKkDrk/logo.png"
 
 # Strict Corporate Constraints File Paths
 PARENT_INV_PATH = "db_parent_inventory.csv"
