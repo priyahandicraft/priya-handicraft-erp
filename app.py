@@ -10,29 +10,19 @@ import urllib.parse
 # ==============================================================================
 st.set_page_config(page_title="Priya Handicraft ERP", layout="wide", initial_sidebar_state="expanded")
 
-# Corporate Style Configuration (Cinzel-like Serif Header / Custom Tables)
+# Corporate Style Configuration (Premium Clean View / Center Logo Zoomed In)
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
         
-        .brand-header {
-            font-family: 'Cinzel', serif;
-            font-weight: 800;
-            font-size: 42px;
-            color: #1E3A8A;
-            text-align: center;
-            letter-spacing: 2px;
-            margin-bottom: 0px;
-        }
-        .brand-sub {
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 13px;
-            color: #DC2626;
-            text-align: center;
-            letter-spacing: 4px;
-            margin-top: -5px;
-            margin-bottom: 30px;
+        /* Center container specifically for the large corporate logo banner */
+        .logo-center-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 25px;
+            margin-top: 10px;
         }
         .outstanding-alert {
             color: #DC2626;
@@ -60,9 +50,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🌐 ONLINE SECURE LOGO URL (No File Upload Needed!)
-# Tip: Aap future mein is URL link ko apni kisi bhi online logo image link se badal sakti hain
-LOGO_URL = "https://i.ibb.co/S4vKkDrk/logo.png"
+# 🌐 ONLINE SECURE LOGO URL (Is link ko aap postimage/imgbb ke DIRECT link se badal sakti hain)
+LOGO_URL = "https://i.ibb.co/1YCknz7x/Copy-of-Priya-Handicraft-1.png"
 
 # Strict Corporate Constraints File Paths
 PARENT_INV_PATH = "db_parent_inventory.csv"
@@ -143,13 +132,13 @@ def save_target(val: float):
         json.dump({"monthly_revenue_target": val}, f)
 
 # ==============================================================================
-# BRANDING HEADER RENDER ENGINE (SAFE LINK LOGO)
+# BRANDING HEADER RENDER ENGINE (ZOOMED IN & CENTERED - NO EXTRA TEXT)
 # ==============================================================================
 def render_corporate_header():
-    # Logo uses secure cloud URL to prevent file-not-found system crashes
-    st.image(LOGO_URL, width=120)
-    st.markdown('<h1 class="brand-header">PRIYA HANDICRAFT</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="brand-sub">MANUFACTURERS & WHOLESALERS</p>', unsafe_allow_html=True)
+    # Extra Text removed. Logo centered and Zoomed In to width=320 for prominent visibility.
+    st.markdown('<div class="logo-center-container">', unsafe_allow_html=True)
+    st.image(LOGO_URL, width=320)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # STREAMLIT CONTROLLER ROUTER INTERFACE
@@ -206,7 +195,6 @@ if app_tab == "Tab 1: Sales & Finance Dashboard":
     st.progress(min(1.0, progress_pct / 100))
     st.caption(f"Current completion status: **{progress_pct:.2f}%**")
     
-    # ⚠️ LIVE LOW STOCK ALERT SHOWN ON DASHBOARD
     st.write("---")
     st.subheader("🚨 Live Stock Security Alerts")
     if not parent_df.empty:
@@ -219,13 +207,12 @@ if app_tab == "Tab 1: Sales & Finance Dashboard":
             st.success("✅ All Inventory Levels Healthy. No low stock detected.")
 
 # ==============================================================================
-# TAB 2: INVENTORY DESK (TWO-TIER NESTED ARCHITECTURE)
+# TAB 2: INVENTORY DESK
 # ==============================================================================
 elif app_tab == "Tab 2: Inventory Listing Desk":
     render_corporate_header()
     st.subheader("📦 Level 1: Two-Tier Parent Summary View")
     
-    # Create Dynamic Categories Dropdown list
     existing_categories = ["Select or Type New"] + sorted(parent_df["Category"].dropna().unique().tolist()) if not parent_df.empty else ["Select or Type New", "Navratri Imitation", "Fabric Jewelry", "Oxidized Sets"]
     
     with st.expander("➕ Define New Navratri Design Profile"):
@@ -331,7 +318,6 @@ elif app_tab == "Tab 3: Outstanding Receivables Ledger":
         total_market_outstanding = receivables_df["Pending_Dues"].sum()
         st.markdown(f"Total Market Outstanding Credit Risk: <span class='outstanding-alert'>₹ {total_market_outstanding:,.2f}</span>", unsafe_allow_html=True)
         
-        # Date and text constraints applied strictly
         st.dataframe(receivables_df[[
             "Invoice_Date", "Customer_Name", "Mobile", "City", 
             "Total_Invoice_Amount", "Amount_Paid", "Pending_Dues"
@@ -362,7 +348,7 @@ elif app_tab == "Tab 3: Outstanding Receivables Ledger":
             st.rerun()
 
 # ==============================================================================
-# CREATE NEW WHOLESALE INVOICE (TEXT ENTRY OVERRIDES & LOGISTICS CODES)
+# CREATE NEW WHOLESALE INVOICE
 # ==============================================================================
 elif app_tab == "🛒 Create New Wholesale Invoice":
     render_corporate_header()
@@ -391,7 +377,6 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
             
             col_l1, col_l2, col_l3, col_l4 = st.columns(4)
             
-            # --- MANDATED SYSTEM DIRECT TEXT INPUT OVERRIDES ---
             pkt_size_raw = col_l1.text_input(f"Packet Size Multiplier ({sku}):", value="12", key=f"psize_{sku}")
             pkt_count_raw = col_l2.text_input(f"Number of Packets Selected ({sku}):", value="0", key=f"pcount_{sku}")
             loose_units_raw = col_l3.text_input(f"Loose Single Pieces Count ({sku}):", value="0", key=f"loose_{sku}")
@@ -453,11 +438,12 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
                 
             pending_dues = max(0.0, total_invoice_amount - amount_paid)
             
-            # 📄 DRAFT COMMERCIAL INVOICE DISPLAY VIEW
+            # --- PREVIEW Manifest ---
             st.markdown("### 📄 Commercial Invoice Preview Manifest Frame")
             st.write("---")
-            st.image(LOGO_URL, width=100)
-            st.markdown("<h2 style='text-align: center; font-family: Cinzel, serif; font-weight:800; margin-bottom:0;'>PRIYA HANDICRAFT</h2>", unsafe_allow_html=True)
+            st.markdown('<div class="logo-center-container">', unsafe_allow_html=True)
+            st.image(LOGO_URL, width=250)
+            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown(f"**Date:** {datetime.now().strftime('%d-%m-%Y')} | **Invoice ID:** PH-INV-TEMP")
             st.markdown(f"**Customer Name:** {cust_name} | **Mobile:** {cust_mobile} | **City Location:** {cust_city}")
             
@@ -467,7 +453,7 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
             st.markdown(f"""
             - **Wholesale Order Subtotal:** ₹ {running_subtotal:,.2f}
             - **Packing Charges:** ₹ {packing_charges:,.2f}
-            - **Shipping/Transport Charges:** ₹ {shipping_charges:,.2f}
+            - **Shipping/Transport Charges:** ₹ {shipping_transport_charges:,.2f}
             - **Navratri Component GST (3%):** ₹ {gst_amount:,.2f}
             ---
             - ### 🏁 Finalized Grand Total Valuation: **₹ {total_invoice_amount:,.2f}**
@@ -482,7 +468,7 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
                     st.error("Corporate client names and mobile links are mandatory fields.")
                 else:
                     new_inv_id = f"PH-INV-{len(invoice_df) + 10001}"
-                    current_date_str = datetime.now().strftime("%d-%m-%Y") # Strict Format Schema rule
+                    current_date_str = datetime.now().strftime("%d-%m-%Y")
                     
                     for cart_row in order_basket:
                         target_sku = cart_row["Design_Code"]
@@ -499,16 +485,14 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
                     }
                     invoice_df = pd.concat([invoice_df, pd.DataFrame([new_invoice_record])], ignore_index=True)
                     save_invoices(invoice_df)
-                    st.success(f"🎉 Invoice locked under transaction reference key ID: {new_inv_id}")
+                    st.success(f"🎉 Invoice locked under reference key ID: {new_inv_id}")
                     
-                    # --- DUAL STREAM EXPORT FRAMEWORK DOWNLOADS ---
                     st.markdown("#### 💾 Dual Stream File Export Compilation Workspace")
                     csv_export = basket_df.to_csv(index=False)
                     st.download_button(label="📥 Stream A: Download Raw PDF Layout Schema (.CSV File Representation)", data=csv_export, file_name=f"Invoice_Manifest_{new_inv_id}.csv", mime="text/csv")
                     st.download_button(label="📥 Stream B: Export Structured Data Excel Sheets (.XLSX)", data=csv_export, file_name=f"Corporate_Ledger_DataSheet_{new_inv_id}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     
-                    # WhatsApp API Link formulation
-                    msg_template = f"Hello {cust_name}, your bill from PRIYA HANDICRAFT is ready. Invoice ID: {new_inv_id}. Total Valuation Amount: Rs. {total_invoice_amount:.2f}. Balance Status: {p_status}. Thank you for your order!"
+                    msg_template = f"Hello {cust_name}, your bill from PRIYA HANDICRAFT is ready. Invoice ID: {new_inv_id}. Total: Rs. {total_invoice_amount:.2f}. Thank you for your order!"
                     url_encoded_msg = urllib.parse.quote(msg_template)
                     wa_api_url = f"https://api.whatsapp.com/send?phone={cust_mobile}&text={url_encoded_msg}"
                     st.markdown(f'<a href="{wa_api_url}" target="_blank"><button style="background-color:#25D366; color:white; font-weight:bold; border:none; padding:12px; border-radius:4px; width:100%; cursor:pointer;">📲 Direct Action Hook: Push Invoice via WhatsApp Business API Link </button></a>', unsafe_allow_html=True)
