@@ -57,7 +57,7 @@ st.markdown("""
 
 # 🌐 ONLINE SECURE LOGO URL 
 # Yahan par aap apne ImgBB ka direct link paste kar sakti hain
-LOGO_URL = "https://img.icons8.com/fluent/150/000000/jewelry.png"
+LOGO_URL = "https://i.ibb.co/1YjjLc8w/Copy-of-Priya-Handicraf-t-1.png"
 
 # Strict Corporate Constraints File Paths
 PARENT_INV_PATH = "db_parent_inventory.csv"
