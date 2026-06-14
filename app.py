@@ -143,7 +143,7 @@ def save_target(val: float):
 # ==============================================================================
 def render_corporate_header():
     # Sourcing from context specified mock location / fallbacks gracefully if missing
-    st.image("https://placehold.co/150x150/1e3a8a/ffffff?text=LOGO", width=150, use_container_width=False)
+    st.image("logo.png", width=150)
     st.markdown('<h1 class="brand-header">PRIYA HANDICRAFT</h1>', unsafe_allow_html=True)
     st.markdown('<p class="brand-sub">MANUFACTURERS & WHOLESALERS</p>', unsafe_allow_html=True)
 
