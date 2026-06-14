@@ -10,19 +10,24 @@ import urllib.parse
 # ==============================================================================
 st.set_page_config(page_title="Priya Handicraft ERP", layout="wide", initial_sidebar_state="expanded")
 
-# Corporate Style Configuration (Premium Clean View / Center Logo Zoomed In)
+# Corporate Style Configuration (CRITICAL CENTER ALIGNMENT & ZOOM)
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
         
-        /* Center container specifically for the large corporate logo banner */
-        .logo-center-container {
+        /* 🎯 Pure screen par logo ko perfectly center karne ka naya trick */
+        .logo-box {
             display: flex;
             justify-content: center;
             align-items: center;
+            text-align: center;
             width: 100%;
-            margin-bottom: 25px;
-            margin-top: 10px;
+            margin: 20px auto 40px auto;
+        }
+        .logo-box img {
+            max-width: 550px !important; /* Zoom level bada kiya hai */
+            width: 100%;
+            height: auto;
         }
         .outstanding-alert {
             color: #DC2626;
@@ -50,8 +55,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 🌐 ONLINE SECURE LOGO URL (Is link ko aap postimage/imgbb ke DIRECT link se badal sakti hain)
-LOGO_URL = "https://i.ibb.co/1YCknz7x/Copy-of-Priya-Handicraft-1.png"
+# 🌐 ONLINE SECURE LOGO URL 
+# Yahan par aap apne ImgBB ka direct link paste kar sakti hain
+LOGO_URL = "https://img.icons8.com/fluent/150/000000/jewelry.png"
 
 # Strict Corporate Constraints File Paths
 PARENT_INV_PATH = "db_parent_inventory.csv"
@@ -132,13 +138,11 @@ def save_target(val: float):
         json.dump({"monthly_revenue_target": val}, f)
 
 # ==============================================================================
-# BRANDING HEADER RENDER ENGINE (ZOOMED IN & CENTERED - NO EXTRA TEXT)
+# BRANDING HEADER RENDER ENGINE (PERFECTLY CENTERED AND BIG)
 # ==============================================================================
 def render_corporate_header():
-    # Extra Text removed. Logo centered and Zoomed In to width=320 for prominent visibility.
-    st.markdown('<div class="logo-center-container">', unsafe_allow_html=True)
-    st.image(LOGO_URL, width=320)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # HTML injection se logo ko center aur scale (bada) kiya hai
+    st.markdown(f'<div class="logo-box"><img src="{LOGO_URL}"></div>', unsafe_allow_html=True)
 
 # ==============================================================================
 # STREAMLIT CONTROLLER ROUTER INTERFACE
@@ -441,9 +445,7 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
             # --- PREVIEW Manifest ---
             st.markdown("### 📄 Commercial Invoice Preview Manifest Frame")
             st.write("---")
-            st.markdown('<div class="logo-center-container">', unsafe_allow_html=True)
-            st.image(LOGO_URL, width=250)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="logo-box"><img src="{LOGO_URL}"></div>', unsafe_allow_html=True)
             st.markdown(f"**Date:** {datetime.now().strftime('%d-%m-%Y')} | **Invoice ID:** PH-INV-TEMP")
             st.markdown(f"**Customer Name:** {cust_name} | **Mobile:** {cust_mobile} | **City Location:** {cust_city}")
             
@@ -453,7 +455,7 @@ elif app_tab == "🛒 Create New Wholesale Invoice":
             st.markdown(f"""
             - **Wholesale Order Subtotal:** ₹ {running_subtotal:,.2f}
             - **Packing Charges:** ₹ {packing_charges:,.2f}
-            - **Shipping/Transport Charges:** ₹ {shipping_transport_charges:,.2f}
+            - **Shipping/Transport Charges:** ₹ {shipping_charges:,.2f}
             - **Navratri Component GST (3%):** ₹ {gst_amount:,.2f}
             ---
             - ### 🏁 Finalized Grand Total Valuation: **₹ {total_invoice_amount:,.2f}**
